@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+assemblyai
+gtts
+librosa
+matplotlib
+pandas
+numpy
