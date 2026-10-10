@@ -13,10 +13,8 @@ st.set_page_config(
 )
 
 # ---------------- BACKEND CONFIG ----------------
-try:
-    BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
-except Exception:
-    BACKEND_URL = os.getenv("BACKEND_URL", "").rstrip("/")
+BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
+
 
 
 # ---------------- PROFESSIONAL THEME ----------------
