@@ -13,6 +13,7 @@ st.set_page_config(
 )
 
 # ---------------- BACKEND CONFIG ----------------
+<<<<<<< HEAD
 BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
 
 
@@ -63,6 +64,60 @@ st.markdown(
         letter-spacing: -1px;
     }
 
+=======
+try:
+    BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
+except Exception:
+    BACKEND_URL = os.getenv("BACKEND_URL", "").rstrip("/")
+
+
+# ---------------- PROFESSIONAL THEME ----------------
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(
+            135deg,
+            #111827 0%,
+            #1E1B4B 55%,
+            #272052 100%
+        );
+        color: #F9FAFB;
+    }
+
+    [data-testid="stHeader"],
+    [data-testid="stAppViewContainer"] > .main {
+        background: transparent;
+    }
+
+    .block-container {
+        max-width: 1200px;
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+
+    .hero {
+        background: linear-gradient(
+            120deg,
+            #3730A3 0%,
+            #6366F1 55%,
+            #8B5CF6 100%
+        );
+        padding: 32px 34px;
+        border-radius: 24px;
+        margin-bottom: 30px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+    }
+
+    .hero h1 {
+        color: #FFFFFF;
+        font-size: clamp(30px, 4vw, 42px);
+        font-weight: 750;
+        margin: 0 0 12px 0;
+        letter-spacing: -1px;
+    }
+
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
     .hero p {
         color: #EEF2FF;
         font-size: 16px;
@@ -192,6 +247,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+<<<<<<< HEAD
 # ---------- DATASET: IDEAL REFERENCE ----------
 st.markdown("---")
 st.header("📚 Dataset Reference Speech")
@@ -217,6 +273,8 @@ if os.path.exists(annotation_path):
 else:
     st.caption("Reference annotation file was not found.")
 
+=======
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
 
 # ---------------- RECORD OR UPLOAD SPEECH ----------------
 st.markdown(
@@ -331,11 +389,16 @@ if st.button("✨ Analyze My Speech", use_container_width=True):
             st.session_state.pop("speech_result", None)
             st.error(f"Analysis failed: {exc}")
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
 # ---------------- DISPLAY RESULTS ----------------
 result = st.session_state.get("speech_result")
 
 if result:
     st.markdown("---")
+<<<<<<< HEAD
     st.markdown("## 📊 Your Speech Analysis")
 
     transcript = result.get("transcript") or ""
@@ -364,11 +427,37 @@ if result:
 
     # Overview metrics
     metric_fields = [
+=======
+    st.markdown(
+        '<div class="section-title">📊 Your Speech Analysis</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Transcript
+    transcript = result.get("transcript", "")
+
+    st.markdown("### 📝 Transcript")
+
+    if transcript:
+        st.markdown(
+            '<div class="custom-card">'
+            + "<p>"
+            + __import__("html").escape(str(transcript))
+            + "</p></div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.info("No transcript was returned by the backend.")
+
+    # Overall metrics, only when the backend provides them
+    overall_metrics = [
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
         ("score", "Speech Score"),
         ("speech_rate", "Speech Rate"),
         ("duration", "Duration"),
     ]
 
+<<<<<<< HEAD
     metrics = [
         (label, result[key])
         for key, label in metric_fields
@@ -388,10 +477,35 @@ if result:
 
     if sentence_results:
         for i, item in enumerate(sentence_results, start=1):
+=======
+    available_metrics = [
+        (label, result[key])
+        for key, label in overall_metrics
+        if key in result
+        and not isinstance(result[key], (dict, list, bool))
+        and result[key] is not None
+    ]
+
+    if available_metrics:
+        st.markdown("### 📌 Overview")
+        cols = st.columns(len(available_metrics))
+
+        for col, (label, value) in zip(cols, available_metrics):
+            col.metric(label, value)
+
+    # Sentence-by-sentence analysis
+    sentence_results = result.get("results", [])
+
+    if sentence_results:
+        st.markdown("### 🎯 Sentence-wise Analysis")
+
+        for index, item in enumerate(sentence_results, start=1):
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
             if not isinstance(item, dict):
                 continue
 
             with st.container(border=True):
+<<<<<<< HEAD
                 st.markdown(f"**Sentence {i}**")
                 st.write(item.get("sentence", "Speech segment"))
 
@@ -403,6 +517,24 @@ if result:
                     st.caption(f"{start:.2f}s – {end:.2f}s")
 
                 metric_fields = [
+=======
+                st.markdown(f"**Sentence {index}**")
+
+                sentence = item.get(
+                    "sentence", "Sentence unavailable"
+                )
+                st.write(sentence)
+
+                start = item.get("start")
+                end = item.get("end")
+
+                if isinstance(start, (int, float)) and isinstance(
+                    end, (int, float)
+                ):
+                    st.caption(f"Timestamp: {start:.2f}s – {end:.2f}s")
+
+                sentence_metrics = [
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
                     ("rate", "Speaking Rate"),
                     ("pitch", "Pitch"),
                     ("pitch_var", "Pitch Variation"),
@@ -411,21 +543,38 @@ if result:
 
                 available = [
                     (label, item[key])
+<<<<<<< HEAD
                     for key, label in metric_fields
+=======
+                    for key, label in sentence_metrics
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
                     if isinstance(item.get(key), (int, float))
                     and not isinstance(item.get(key), bool)
                 ]
 
                 if available:
+<<<<<<< HEAD
                     cols = st.columns(len(available))
                     for col, (label, value) in zip(cols, available):
                         col.metric(label, f"{value:.2f}")
 
                 tips = item.get("tips") or []
+=======
+                    metric_cols = st.columns(len(available))
+
+                    for col, (label, value) in zip(
+                        metric_cols, available
+                    ):
+                        col.metric(label, f"{value:.2f}")
+
+                tips = item.get("tips", [])
+
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
                 if isinstance(tips, str):
                     tips = [tips]
 
                 if tips:
+<<<<<<< HEAD
                     st.markdown("**💡 Tips to improve**")
                     for tip in tips:
                         st.write(f"• {tip}")
@@ -449,17 +598,87 @@ if result:
     if graph:
         try:
             graph_string = str(graph)
+=======
+                    st.markdown("**💡 Improvement Tips**")
+
+                    for tip in tips:
+                        st.write(f"• {tip}")
+
+    # Detected issues and timestamps
+    regions = result.get("regions", [])
+
+    if regions:
+        st.markdown("### ⚠️ Areas to Improve")
+
+        for region in regions:
+            if not isinstance(region, dict):
+                continue
+
+            start = region.get("from", 0)
+            end = region.get("to", 0)
+            issue = region.get("issue", "Review this section")
+
+            st.markdown(
+                f"""
+                <div class="custom-card">
+                    <p><strong>⏱️ {start}s – {end}s</strong></p>
+                    <p>{__import__("html").escape(str(issue))}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    # Graph returned by the backend
+    graph = result.get("graph")
+
+    if graph:
+        st.markdown("### 📈 Speech Analysis Graph")
+
+        try:
+            graph_string = str(graph)
+
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
             if graph_string.startswith("data:image"):
                 graph_string = graph_string.split(",", 1)[1]
 
             graph_bytes = base64.b64decode(graph_string, validate=True)
             st.image(graph_bytes, use_container_width=True)
+<<<<<<< HEAD
         except Exception:
             st.warning("Graph data was returned but could not be displayed.")
     else:
         st.caption("The graph will appear when the backend generates it.")
 
    
+=======
+
+        except Exception:
+            st.warning(
+                "The backend returned graph data, but it could not "
+                "be displayed as an image."
+            )
+
+    # Other feedback fields, if provided
+    for key, title in [
+        ("feedback", "💡 Additional Feedback"),
+        ("analysis", "🔍 Additional Analysis"),
+    ]:
+        value = result.get(key)
+
+        if value:
+            st.markdown(f"### {title}")
+
+            if isinstance(value, str):
+                st.write(value)
+            elif isinstance(value, list):
+                for entry in value:
+                    st.write(f"• {entry}")
+            elif isinstance(value, dict):
+                for label, detail in value.items():
+                    st.markdown(f"**{label.replace('_', ' ').title()}**")
+                    st.write(detail)
+
+>>>>>>> 785a1b3 (Update speech coach and add dataset)
 
 
 # ---------------- FOOTER ----------------
