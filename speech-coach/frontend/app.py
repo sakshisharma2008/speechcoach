@@ -459,10 +459,7 @@ if result:
     else:
         st.caption("The graph will appear when the backend generates it.")
 
-    # Debug data stays collapsed
-    with st.expander("Developer debugging — raw backend response"):
-        st.json(result)
-
+   
 
 
 # ---------------- FOOTER ----------------
