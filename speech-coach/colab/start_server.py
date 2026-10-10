@@ -14,6 +14,83 @@ import subprocess
 from pathlib import Path
 from google.colab import userdata
 
+
+import streamlit as st
+
+
+def show_meter(title, value, low, high, unit, description):
+    st.markdown(f"### {title}")
+
+    if value is None:
+        st.info("Meter unavailable for this recording.")
+        return
+
+    value = float(value)
+    percentage = max(
+        0.0,
+        min(100.0, (value - low) / (high - low) * 100)
+    )
+
+    st.progress(percentage / 100)
+
+    st.markdown(f"**Measured:** {value:.2f} {unit}")
+    st.caption(f"Target range: {low}–{high} {unit}")
+    st.caption(description)
+
+
+def show_voice_meters(result):
+    rows = result.get("results", [])
+
+    if not rows:
+        st.info("No sentence measurements available.")
+        return
+
+    energy_values = [
+        float(row["energy"])
+        for row in rows
+        if row.get("energy") is not None
+    ]
+
+    rate_values = [
+        float(row["rate"])
+        for row in rows
+        if row.get("rate") is not None
+    ]
+
+    avg_energy = (
+        sum(energy_values) / len(energy_values)
+        if energy_values else None
+    )
+
+    avg_rate = (
+        sum(rate_values) / len(rate_values)
+        if rate_values else None
+    )
+
+    st.header("🎙️ Voice Performance")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        show_meter(
+            "🔊 Voice Energy",
+            avg_energy,
+            -6,
+            6,
+            "dB",
+            "Relative energy compared with the recording's typical level."
+        )
+
+    with col2:
+        show_meter(
+            "⚡ Speaking Speed",
+            avg_rate,
+            1.8,
+            3.3,
+            "words/s",
+            "Average of the sentence-level speaking rates."
+        )
+
 def show_meter(title, value, low, high, unit, description):
     st.markdown(f"### {title}")
 
