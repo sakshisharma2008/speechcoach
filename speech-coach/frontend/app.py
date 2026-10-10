@@ -306,82 +306,78 @@ if st.button("✨ Analyze My Speech", use_container_width=True):
             st.session_state.pop("speech_result", None)
             st.error(f"Analysis failed: {exc}")
 
-
 # ---------------- DISPLAY RESULTS ----------------
 result = st.session_state.get("speech_result")
 
 if result:
     st.markdown("---")
-    st.markdown(
-        '<div class="section-title">📊 Your Speech Analysis</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("## 📊 Your Speech Analysis")
+
+    transcript = result.get("transcript") or ""
+    sentence_results = result.get("results") or []
+    regions = result.get("regions") or []
+    graph = result.get("graph")
+
+    # Status banner
+    if not transcript and not sentence_results:
+        st.error(
+            "⚠️ The backend received a request but returned no speech "
+            "analysis. Please check the backend logs in Google Colab."
+        )
+        st.info(
+            "Your dashboard is working. The transcription or audio "
+            "processing step needs debugging."
+        )
 
     # Transcript
-    transcript = result.get("transcript", "")
-
     st.markdown("### 📝 Transcript")
-
     if transcript:
-        st.markdown(
-            '<div class="custom-card">'
-            + "<p>"
-            + __import__("html").escape(str(transcript))
-            + "</p></div>",
-            unsafe_allow_html=True,
-        )
+        st.success("Speech transcribed successfully.")
+        st.write(transcript)
     else:
-        st.info("No transcript was returned by the backend.")
+        st.warning("No transcript available.")
 
-    # Overall metrics, only when the backend provides them
-    overall_metrics = [
+    # Overview metrics
+    metric_fields = [
         ("score", "Speech Score"),
         ("speech_rate", "Speech Rate"),
         ("duration", "Duration"),
     ]
 
-    available_metrics = [
+    metrics = [
         (label, result[key])
-        for key, label in overall_metrics
-        if key in result
-        and not isinstance(result[key], (dict, list, bool))
-        and result[key] is not None
+        for key, label in metric_fields
+        if result.get(key) is not None
+        and isinstance(result.get(key), (int, float, str))
+        and not isinstance(result.get(key), bool)
     ]
 
-    if available_metrics:
+    if metrics:
         st.markdown("### 📌 Overview")
-        cols = st.columns(len(available_metrics))
-
-        for col, (label, value) in zip(cols, available_metrics):
+        cols = st.columns(len(metrics))
+        for col, (label, value) in zip(cols, metrics):
             col.metric(label, value)
 
-    # Sentence-by-sentence analysis
-    sentence_results = result.get("results", [])
+    # Sentence analysis
+    st.markdown("### 🎯 Sentence-wise Analysis")
 
     if sentence_results:
-        st.markdown("### 🎯 Sentence-wise Analysis")
-
-        for index, item in enumerate(sentence_results, start=1):
+        for i, item in enumerate(sentence_results, start=1):
             if not isinstance(item, dict):
                 continue
 
             with st.container(border=True):
-                st.markdown(f"**Sentence {index}**")
-
-                sentence = item.get(
-                    "sentence", "Sentence unavailable"
-                )
-                st.write(sentence)
+                st.markdown(f"**Sentence {i}**")
+                st.write(item.get("sentence", "Speech segment"))
 
                 start = item.get("start")
                 end = item.get("end")
-
                 if isinstance(start, (int, float)) and isinstance(
                     end, (int, float)
                 ):
-                    st.caption(f"Timestamp: {start:.2f}s – {end:.2f}s")
+                    st.caption(f"{start:.2f}s – {end:.2f}s")
 
-                sentence_metrics = [
+                metric_fields = [
                     ("rate", "Speaking Rate"),
                     ("pitch", "Pitch"),
                     ("pitch_var", "Pitch Variation"),
@@ -390,98 +386,58 @@ if result:
 
                 available = [
                     (label, item[key])
-                    for key, label in sentence_metrics
+                    for key, label in metric_fields
                     if isinstance(item.get(key), (int, float))
                     and not isinstance(item.get(key), bool)
                 ]
 
                 if available:
-                    metric_cols = st.columns(len(available))
-
-                    for col, (label, value) in zip(
-                        metric_cols, available
-                    ):
+                    cols = st.columns(len(available))
+                    for col, (label, value) in zip(cols, available):
                         col.metric(label, f"{value:.2f}")
 
-                tips = item.get("tips", [])
-
+                tips = item.get("tips") or []
                 if isinstance(tips, str):
                     tips = [tips]
 
                 if tips:
-                    st.markdown("**💡 Improvement Tips**")
-
+                    st.markdown("**💡 Tips to improve**")
                     for tip in tips:
                         st.write(f"• {tip}")
+    else:
+        st.caption("Sentence-level metrics will appear after audio processing works.")
 
-    # Detected issues and timestamps
-    regions = result.get("regions", [])
-
+    # Detected issues
+    st.markdown("### ⚠️ Areas to Improve")
     if regions:
-        st.markdown("### ⚠️ Areas to Improve")
-
         for region in regions:
-            if not isinstance(region, dict):
-                continue
+            if isinstance(region, dict):
+                start = region.get("from", region.get("start", 0))
+                end = region.get("to", region.get("end", 0))
+                issue = region.get("issue", "Review this section")
+                st.write(f"⏱️ {start}s – {end}s: {issue}")
+    else:
+        st.caption("No issue regions were returned by the backend.")
 
-            start = region.get("from", 0)
-            end = region.get("to", 0)
-            issue = region.get("issue", "Review this section")
-
-            st.markdown(
-                f"""
-                <div class="custom-card">
-                    <p><strong>⏱️ {start}s – {end}s</strong></p>
-                    <p>{__import__("html").escape(str(issue))}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-    # Graph returned by the backend
-    graph = result.get("graph")
-
+    # Graph
+    st.markdown("### 📈 Speech Analysis Graph")
     if graph:
-        st.markdown("### 📈 Speech Analysis Graph")
-
         try:
             graph_string = str(graph)
-
             if graph_string.startswith("data:image"):
                 graph_string = graph_string.split(",", 1)[1]
 
             graph_bytes = base64.b64decode(graph_string, validate=True)
             st.image(graph_bytes, use_container_width=True)
-
         except Exception:
-            st.warning(
-                "The backend returned graph data, but it could not "
-                "be displayed as an image."
-            )
+            st.warning("Graph data was returned but could not be displayed.")
+    else:
+        st.caption("The graph will appear when the backend generates it.")
 
-    # Other feedback fields, if provided
-    for key, title in [
-        ("feedback", "💡 Additional Feedback"),
-        ("analysis", "🔍 Additional Analysis"),
-    ]:
-        value = result.get(key)
-
-        if value:
-            st.markdown(f"### {title}")
-
-            if isinstance(value, str):
-                st.write(value)
-            elif isinstance(value, list):
-                for entry in value:
-                    st.write(f"• {entry}")
-            elif isinstance(value, dict):
-                for label, detail in value.items():
-                    st.markdown(f"**{label.replace('_', ' ').title()}**")
-                    st.write(detail)
-
-    # Raw JSON is hidden unless someone opens this section
+    # Debug data stays collapsed
     with st.expander("Developer debugging — raw backend response"):
         st.json(result)
+
 
 
 # ---------------- FOOTER ----------------
