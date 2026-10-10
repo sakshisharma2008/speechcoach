@@ -14,6 +14,46 @@ import subprocess
 from pathlib import Path
 from google.colab import userdata
 
+def show_meter(title, value, low, high, unit, description):
+    st.markdown(f"### {title}")
+
+    if value is None:
+        st.info("Meter unavailable for this recording.")
+        return
+
+    value = float(value)
+
+    # Keep the visual position inside the meter's range.
+    display_value = max(low, min(high, value))
+    percentage = (display_value - low) / (high - low) * 100
+
+    st.markdown(
+        f"""
+        <div style="
+            background:#e5e7eb;
+            height:14px;
+            border-radius:20px;
+            overflow:hidden;
+            margin:8px 0;
+        ">
+            <div style="
+                width:{percentage:.1f}%;
+                height:14px;
+                background:#7c3aed;
+                border-radius:20px;
+            "></div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        f"**Measured:** {value:.2f} {unit}  \n"
+        f"**Target range:** {low}–{high} {unit}  \n"
+        f"{description}"
+    )
+
+
 # ------------------------------------------------------------
 # 1. ASSEMBLYAI API KEY
 # Add ASSEMBLYAI_API_KEY in Colab Secrets before running.
@@ -743,6 +783,64 @@ if not api_ready:
 
 print("✅ FastAPI started successfully")
 
+# ---------- VOICE METERS ----------
+if result and result.get("results"):
+    st.markdown("---")
+    st.header("🎙️ Voice Performance Meters")
+
+    sentence_results = result["results"]
+
+    # Average measured energy across sentences.
+    energy_values = [
+        float(row["energy"])
+        for row in sentence_results
+        if row.get("energy") is not None
+    ]
+
+    # Existing backend rate is words per second.
+    rate_values = [
+        float(row["rate"])
+        for row in sentence_results
+        if row.get("rate") is not None
+    ]
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        avg_energy = (
+            sum(energy_values) / len(energy_values)
+            if energy_values else None
+        )
+
+        show_meter(
+            title="🔊 Voice Energy",
+            value=avg_energy,
+            low=-6,
+            high=6,
+            unit="dB",
+            description=(
+                "Relative energy: the target range is -6 to +6 dB."
+            )
+        )
+
+    with col2:
+        avg_rate = (
+            sum(rate_values) / len(rate_values)
+            if rate_values else None
+        )
+
+        show_meter(
+            title="⚡ Speaking Speed",
+            value=avg_rate,
+            low=1.8,
+            high=3.3,
+            unit="words/s",
+            description=(
+                "Target pace: 1.8–3.3 words per second."
+            )
+        )
+
+result = st.session_state.get("speech_result")
 
 # ------------------------------------------------------------
 # 4. START CLOUDFLARE TUNNEL
