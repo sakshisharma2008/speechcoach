@@ -14,8 +14,7 @@ st.set_page_config(
 # Set BACKEND_URL in Streamlit Community Cloud Secrets.
 # Example:
 # BACKEND_URL = "https://your-colab-tunnel.trycloudflare.com"
-
-    BACKEND_URL = st.secrets["BACKEND_URL"].rstrip("/")
+BACKEND_URL = st.secrets["BACKEND_URL"].rstrip("/")
 
 
 # ---------------- PROFESSIONAL THEME ----------------
