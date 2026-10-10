@@ -1,3 +1,5 @@
+
+import base64
 import os
 import requests
 import streamlit as st
@@ -11,17 +13,16 @@ st.set_page_config(
 )
 
 # ---------------- BACKEND CONFIG ----------------
-# Set BACKEND_URL in Streamlit Community Cloud Secrets.
-# Example:
-# BACKEND_URL = "https://your-colab-tunnel.trycloudflare.com"
-BACKEND_URL = st.secrets["BACKEND_URL"].rstrip("/")
+try:
+    BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
+except Exception:
+    BACKEND_URL = os.getenv("BACKEND_URL", "").rstrip("/")
 
 
 # ---------------- PROFESSIONAL THEME ----------------
 st.markdown(
     """
     <style>
-    /* Main background */
     .stApp {
         background: linear-gradient(
             135deg,
@@ -32,10 +33,7 @@ st.markdown(
         color: #F9FAFB;
     }
 
-    [data-testid="stHeader"] {
-        background: transparent;
-    }
-
+    [data-testid="stHeader"],
     [data-testid="stAppViewContainer"] > .main {
         background: transparent;
     }
@@ -46,7 +44,6 @@ st.markdown(
         padding-bottom: 3rem;
     }
 
-    /* Hero header */
     .hero {
         background: linear-gradient(
             120deg,
@@ -75,7 +72,6 @@ st.markdown(
         margin: 0;
     }
 
-    /* Section headings */
     h2, h3 {
         color: #F9FAFB !important;
     }
@@ -92,22 +88,25 @@ st.markdown(
         font-size: 14px;
     }
 
-    /* Cards */
     .custom-card {
         background: rgba(31, 41, 55, 0.88);
         border: 1px solid rgba(167, 139, 250, 0.25);
         border-radius: 18px;
-        padding: 24px;
-        margin-bottom: 18px;
+        padding: 20px;
+        margin-bottom: 16px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
-    /* Input labels */
+    .custom-card p {
+        color: #E5E7EB;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
     label, .stMarkdown p {
         color: #E5E7EB;
     }
 
-    /* Buttons */
     .stButton > button {
         background: linear-gradient(120deg, #6366F1, #8B5CF6);
         color: #FFFFFF;
@@ -126,7 +125,6 @@ st.markdown(
         transform: translateY(-1px);
     }
 
-    /* File uploader */
     [data-testid="stFileUploader"] {
         background: rgba(31, 41, 55, 0.7);
         border-radius: 14px;
@@ -139,17 +137,15 @@ st.markdown(
         border-radius: 12px;
     }
 
-    /* Audio player */
     audio {
         width: 100%;
     }
 
-    /* Metrics */
     [data-testid="stMetric"] {
         background: #1F2937;
         border: 1px solid rgba(167, 139, 250, 0.25);
         border-radius: 15px;
-        padding: 18px;
+        padding: 15px;
     }
 
     [data-testid="stMetricLabel"] {
@@ -160,7 +156,6 @@ st.markdown(
         color: #FFFFFF;
     }
 
-    /* Text areas and select boxes */
     .stTextArea textarea,
     .stTextInput input,
     .stSelectbox div[data-baseweb="select"] {
@@ -169,12 +164,10 @@ st.markdown(
         border-radius: 10px;
     }
 
-    /* Alerts */
     [data-testid="stAlert"] {
         border-radius: 12px;
     }
 
-    /* Footer */
     .footer {
         color: #9CA3AF;
         text-align: center;
@@ -185,6 +178,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 
 # ---------------- HERO ----------------
 st.markdown(
@@ -200,7 +194,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------------- RECORD SPEECH ----------------
+
+# ---------------- RECORD OR UPLOAD SPEECH ----------------
 st.markdown(
     '<div class="section-title">🎤 Record Your Speech</div>',
     unsafe_allow_html=True,
@@ -209,7 +204,7 @@ st.markdown(
 st.markdown(
     """
     <p class="muted">
-        Record your speech or upload an audio file to get personalized feedback.
+        Record your speech or upload an audio file to receive personalized feedback.
     </p>
     """,
     unsafe_allow_html=True,
@@ -228,12 +223,12 @@ uploaded_file = st.file_uploader(
     label_visibility="collapsed",
 )
 
-# Prefer the recording if one is available.
-selected_audio = audio_file if audio_file is not None else uploaded_file
+selected_audio = (
+    audio_file if audio_file is not None else uploaded_file
+)
 
-# ---------------- ANALYSIS ----------------
-st.markdown("")
 
+# ---------------- ANALYZE SPEECH ----------------
 if st.button("✨ Analyze My Speech", use_container_width=True):
 
     if selected_audio is None:
@@ -241,68 +236,80 @@ if st.button("✨ Analyze My Speech", use_container_width=True):
 
     elif not BACKEND_URL:
         st.error(
-            "Backend URL is not configured. Add BACKEND_URL to your "
-            "Streamlit Community Cloud Secrets."
+            "Backend URL is not configured. Add BACKEND_URL "
+            "to your Streamlit Community Cloud Secrets."
         )
 
     else:
-        with st.spinner(
-            "Analyzing your speech... Please wait."
-        ):
-            try:
+        try:
+            with st.spinner("Analyzing your speech... Please wait."):
+
                 audio_bytes = selected_audio.getvalue()
 
-                files = {
-                    "file": (
-                        selected_audio.name
-                        if getattr(selected_audio, "name", None)
-                        else "recording.wav",
-                        audio_bytes,
-                        getattr(
-                            selected_audio,
-                            "type",
-                            None
-                        ) or "application/octet-stream",
-                    )
-                }
+                filename = getattr(selected_audio, "name", None)
+                if not filename:
+                    filename = "recording.wav"
+
+                mime_type = (
+                    getattr(selected_audio, "type", None)
+                    or "application/octet-stream"
+                )
 
                 response = requests.post(
                     f"{BACKEND_URL}/analyze",
-                    files=files,
+                    files={
+                        "file": (
+                            filename,
+                            audio_bytes,
+                            mime_type,
+                        )
+                    },
                     timeout=180,
                 )
 
                 response.raise_for_status()
                 result = response.json()
 
-            except requests.exceptions.Timeout:
-                st.error(
-                    "The analysis took too long. Check that your Colab "
-                    "backend is running and try again."
-                )
+                if not isinstance(result, dict):
+                    raise ValueError(
+                        "The backend did not return a JSON object."
+                    )
 
-            except requests.exceptions.ConnectionError:
-                st.error(
-                    "Could not connect to the backend. Check your "
-                    "BACKEND_URL and ensure the Colab tunnel is active."
-                )
-
-            except requests.exceptions.HTTPError as exc:
-                st.error(
-                    f"Backend returned an HTTP error: {exc}"
-                )
-                try:
-                    st.code(response.text)
-                except Exception:
-                    pass
-
-            except Exception as exc:
-                st.error(f"Analysis failed: {exc}")
-
-            else:
                 st.session_state["speech_result"] = result
+                st.session_state.pop("speech_error", None)
 
-# ---------------- RESULTS ----------------
+        except requests.exceptions.Timeout:
+            st.session_state.pop("speech_result", None)
+            st.error(
+                "Analysis timed out. Check that your backend is running "
+                "and try again."
+            )
+
+        except requests.exceptions.ConnectionError:
+            st.session_state.pop("speech_result", None)
+            st.error(
+                "Could not connect to the backend. Check BACKEND_URL "
+                "and make sure your Cloudflare tunnel is active."
+            )
+
+        except requests.exceptions.HTTPError as exc:
+            st.session_state.pop("speech_result", None)
+            st.error(f"Backend returned an HTTP error: {exc}")
+
+            if "response" in locals():
+                with st.expander("View error details"):
+                    st.code(response.text[:5000])
+
+        except (ValueError, requests.exceptions.JSONDecodeError) as exc:
+            st.session_state.pop("speech_result", None)
+            st.error(f"Could not read the backend response: {exc}")
+
+        except Exception as exc:
+            st.session_state.pop("speech_result", None)
+            st.error(f"Analysis failed: {exc}")
+
+
+# ---------------- DISPLAY RESULTS ----------------
 result = st.session_state.get("speech_result")
 
 if result:
@@ -312,50 +319,172 @@ if result:
         unsafe_allow_html=True,
     )
 
-    # Display common metrics when present in the response.
-    metric_options = [
+    # Transcript
+    transcript = result.get("transcript", "")
+
+    st.markdown("### 📝 Transcript")
+
+    if transcript:
+        st.markdown(
+            '<div class="custom-card">'
+            + "<p>"
+            + __import__("html").escape(str(transcript))
+            + "</p></div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.info("No transcript was returned by the backend.")
+
+    # Overall metrics, only when the backend provides them
+    overall_metrics = [
         ("score", "Speech Score"),
         ("speech_rate", "Speech Rate"),
         ("duration", "Duration"),
     ]
 
     available_metrics = [
-        (key, label, result[key])
-        for key, label in metric_options
-        if isinstance(result, dict) and key in result
-        and not isinstance(result[key], (dict, list))
+        (label, result[key])
+        for key, label in overall_metrics
+        if key in result
+        and not isinstance(result[key], (dict, list, bool))
+        and result[key] is not None
     ]
 
     if available_metrics:
-        columns = st.columns(len(available_metrics))
+        st.markdown("### 📌 Overview")
+        cols = st.columns(len(available_metrics))
 
-        for column, (key, label, value) in zip(
-            columns, available_metrics
-        ):
-            column.metric(label, value)
+        for col, (label, value) in zip(cols, available_metrics):
+            col.metric(label, value)
 
-    # Show textual analysis if available.
-    for key, title in [
-        ("transcript", "📝 Transcript"),
-        ("feedback", "💡 Personalized Feedback"),
-        ("analysis", "🔍 Analysis"),
-    ]:
-        if isinstance(result, dict) and key in result:
+    # Sentence-by-sentence analysis
+    sentence_results = result.get("results", [])
+
+    if sentence_results:
+        st.markdown("### 🎯 Sentence-wise Analysis")
+
+        for index, item in enumerate(sentence_results, start=1):
+            if not isinstance(item, dict):
+                continue
+
+            with st.container(border=True):
+                st.markdown(f"**Sentence {index}**")
+
+                sentence = item.get(
+                    "sentence", "Sentence unavailable"
+                )
+                st.write(sentence)
+
+                start = item.get("start")
+                end = item.get("end")
+
+                if isinstance(start, (int, float)) and isinstance(
+                    end, (int, float)
+                ):
+                    st.caption(f"Timestamp: {start:.2f}s – {end:.2f}s")
+
+                sentence_metrics = [
+                    ("rate", "Speaking Rate"),
+                    ("pitch", "Pitch"),
+                    ("pitch_var", "Pitch Variation"),
+                    ("energy", "Energy"),
+                ]
+
+                available = [
+                    (label, item[key])
+                    for key, label in sentence_metrics
+                    if isinstance(item.get(key), (int, float))
+                    and not isinstance(item.get(key), bool)
+                ]
+
+                if available:
+                    metric_cols = st.columns(len(available))
+
+                    for col, (label, value) in zip(
+                        metric_cols, available
+                    ):
+                        col.metric(label, f"{value:.2f}")
+
+                tips = item.get("tips", [])
+
+                if isinstance(tips, str):
+                    tips = [tips]
+
+                if tips:
+                    st.markdown("**💡 Improvement Tips**")
+
+                    for tip in tips:
+                        st.write(f"• {tip}")
+
+    # Detected issues and timestamps
+    regions = result.get("regions", [])
+
+    if regions:
+        st.markdown("### ⚠️ Areas to Improve")
+
+        for region in regions:
+            if not isinstance(region, dict):
+                continue
+
+            start = region.get("from", 0)
+            end = region.get("to", 0)
+            issue = region.get("issue", "Review this section")
+
             st.markdown(
-                f'<div class="section-title">{title}</div>',
+                f"""
+                <div class="custom-card">
+                    <p><strong>⏱️ {start}s – {end}s</strong></p>
+                    <p>{__import__("html").escape(str(issue))}</p>
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
 
-            value = result[key]
+    # Graph returned by the backend
+    graph = result.get("graph")
 
-            if isinstance(value, (dict, list)):
-                st.json(value)
-            else:
+    if graph:
+        st.markdown("### 📈 Speech Analysis Graph")
+
+        try:
+            graph_string = str(graph)
+
+            if graph_string.startswith("data:image"):
+                graph_string = graph_string.split(",", 1)[1]
+
+            graph_bytes = base64.b64decode(graph_string, validate=True)
+            st.image(graph_bytes, use_container_width=True)
+
+        except Exception:
+            st.warning(
+                "The backend returned graph data, but it could not "
+                "be displayed as an image."
+            )
+
+    # Other feedback fields, if provided
+    for key, title in [
+        ("feedback", "💡 Additional Feedback"),
+        ("analysis", "🔍 Additional Analysis"),
+    ]:
+        value = result.get(key)
+
+        if value:
+            st.markdown(f"### {title}")
+
+            if isinstance(value, str):
                 st.write(value)
+            elif isinstance(value, list):
+                for entry in value:
+                    st.write(f"• {entry}")
+            elif isinstance(value, dict):
+                for label, detail in value.items():
+                    st.markdown(f"**{label.replace('_', ' ').title()}**")
+                    st.write(detail)
 
-    # Always provide a way to inspect fields returned by your API.
-    with st.expander("View complete backend response"):
+    # Raw JSON is hidden unless someone opens this section
+    with st.expander("Developer debugging — raw backend response"):
         st.json(result)
+
 
 # ---------------- FOOTER ----------------
 st.markdown(
