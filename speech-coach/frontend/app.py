@@ -192,6 +192,31 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ---------- DATASET: IDEAL REFERENCE ----------
+st.markdown("---")
+st.header("📚 Dataset Reference Speech")
+
+ideal_audio_path = "dataset/audio/ideal/ideal_001.mp3"
+annotation_path = "dataset/annotations/ideal_001.txt"
+
+if os.path.exists(ideal_audio_path):
+    st.caption("Ideal reference recording")
+    st.audio(ideal_audio_path, format="audio/mp3")
+else:
+    st.warning(
+        "Ideal reference audio not found. "
+        "Check the dataset path in your repository."
+    )
+
+if os.path.exists(annotation_path):
+    with open(annotation_path, "r", encoding="utf-8") as f:
+        ideal_annotation = f.read()
+
+    with st.expander("View ideal reference transcript"):
+        st.text(ideal_annotation)
+else:
+    st.caption("Reference annotation file was not found.")
+
 
 # ---------------- RECORD OR UPLOAD SPEECH ----------------
 st.markdown(
