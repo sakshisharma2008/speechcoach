@@ -15,10 +15,8 @@ st.set_page_config(
 # Example:
 # BACKEND_URL = "https://your-colab-tunnel.trycloudflare.com"
 
-try:
     BACKEND_URL = st.secrets["BACKEND_URL"].rstrip("/")
-except Exception:
-    BACKEND_URL = os.getenv("BACKEND_URL", "").rstrip("/")
+
 
 # ---------------- PROFESSIONAL THEME ----------------
 st.markdown(
