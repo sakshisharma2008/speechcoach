@@ -271,7 +271,7 @@ if st.button("✨ Analyze My Speech", use_container_width=True):
 <<<<<<< HEAD
 =======
 
->>>>>>> 785a1b3 (Update speech coach and add dataset)
+
 # ---------------- DISPLAY RESULTS ----------------
 result = st.session_state.get("speech_result")
 
@@ -330,7 +330,7 @@ if result:
 
     # Overall metrics, only when the backend provides them
     overall_metrics = [
->>>>>>> 785a1b3 (Update speech coach and add dataset)
+
         ("score", "Speech Score"),
         ("speech_rate", "Speech Rate"),
         ("duration", "Duration"),
@@ -426,7 +426,7 @@ if result:
                     for key, label in metric_fields
 =======
                     for key, label in sentence_metrics
->>>>>>> 785a1b3 (Update speech coach and add dataset)
+
                     if isinstance(item.get(key), (int, float))
                     and not isinstance(item.get(key), bool)
                 ]
@@ -448,7 +448,6 @@ if result:
 
                 tips = item.get("tips", [])
 
->>>>>>> 785a1b3 (Update speech coach and add dataset)
                 if isinstance(tips, str):
                     tips = [tips]
 
@@ -516,7 +515,6 @@ if result:
         try:
             graph_string = str(graph)
 
->>>>>>> 785a1b3 (Update speech coach and add dataset)
             if graph_string.startswith("data:image"):
                 graph_string = graph_string.split(",", 1)[1]
 
@@ -557,7 +555,7 @@ if result:
                     st.markdown(f"**{label.replace('_', ' ').title()}**")
                     st.write(detail)
 
->>>>>>> 785a1b3 (Update speech coach and add dataset)
+
 
 
 # ---------------- FOOTER ----------------
