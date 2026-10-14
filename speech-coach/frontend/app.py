@@ -355,7 +355,7 @@ if result:
     # Sentence analysis
     st.markdown("### 🎯 Sentence-wise Analysis")
 
-    if sentence_results:
+if sentence_results:
 
     available_metrics = [
         (label, result[key])
