@@ -268,7 +268,7 @@ if st.button("✨ Analyze My Speech", use_container_width=True):
             st.session_state.pop("speech_result", None)
             st.error(f"Analysis failed: {exc}")
 
-<<<<<<< HEAD
+
 =======
 
 
