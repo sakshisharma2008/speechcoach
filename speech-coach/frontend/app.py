@@ -127,7 +127,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-<<<<<<< HEAD
+
 # ---------- DATASET: IDEAL REFERENCE ----------
 st.markdown("---")
 st.header("📚 Dataset Reference Speech")
