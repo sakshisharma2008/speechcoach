@@ -153,8 +153,7 @@ if os.path.exists(annotation_path):
 else:
     st.caption("Reference annotation file was not found.")
 
-=======
->>>>>>> 785a1b3 (Update speech coach and add dataset)
+
 
 # ---------------- RECORD OR UPLOAD SPEECH ----------------
 st.markdown(
