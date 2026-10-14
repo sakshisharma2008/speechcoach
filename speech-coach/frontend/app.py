@@ -379,7 +379,7 @@ if result:
         st.markdown("### 🎯 Sentence-wise Analysis")
 
         for index, item in enumerate(sentence_results, start=1):
->>>>>>> 785a1b3 (Update speech coach and add dataset)
+
             if not isinstance(item, dict):
                 continue
 
