@@ -18,13 +18,14 @@ BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
 
 
 
+
 # ---------------- PROFESSIONAL THEME ----------------
 st.markdown(
     """
     <style>
     .stApp {
         background: linear-gradient(
-            135deg,
+            to bottom,
             #111827 0%,
             #1E1B4B 55%,
             #272052 100%
@@ -64,60 +65,6 @@ st.markdown(
         letter-spacing: -1px;
     }
 
-=======
-try:
-    BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
-except Exception:
-    BACKEND_URL = os.getenv("BACKEND_URL", "").rstrip("/")
-
-
-# ---------------- PROFESSIONAL THEME ----------------
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: linear-gradient(
-            
-            #111827 0%,
-            #1E1B4B 55%,
-            #272052 100%
-        );
-        color: #F9FAFB;
-    }
-
-    [data-testid="stHeader"],
-    [data-testid="stAppViewContainer"] > .main {
-        background: transparent;
-    }
-
-    .block-container {
-        max-width: 1200px;
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-    }
-
-    .hero {
-        background: linear-gradient(
-            120deg,
-            #3730A3 0%,
-            #6366F1 55%,
-            #8B5CF6 100%
-        );
-        padding: 32px 34px;
-        border-radius: 24px;
-        margin-bottom: 30px;
-        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
-    }
-
-    .hero h1 {
-        color: #FFFFFF;
-        font-size: clamp(30px, 4vw, 42px);
-        font-weight: 750;
-        margin: 0 0 12px 0;
-        letter-spacing: -1px;
-    }
-
->>>>>>> 785a1b3 (Update speech coach and add dataset)
     .hero p {
         color: #EEF2FF;
         font-size: 16px;
@@ -159,78 +106,11 @@ st.markdown(
     label, .stMarkdown p {
         color: #E5E7EB;
     }
-
-    .stButton > button {
-        background: linear-gradient(120deg, #6366F1, #8B5CF6);
-        color: #FFFFFF;
-        border: none;
-        border-radius: 12px;
-        min-height: 48px;
-        font-size: 16px;
-        font-weight: 650;
-        transition: all 0.2s ease;
-    }
-
-    .stButton > button:hover {
-        border: 1px solid #C4B5FD;
-        color: #FFFFFF;
-        box-shadow: 0 0 18px rgba(139, 92, 246, 0.3);
-        transform: translateY(-1px);
-    }
-
-    [data-testid="stFileUploader"] {
-        background: rgba(31, 41, 55, 0.7);
-        border-radius: 14px;
-        padding: 12px;
-    }
-
-    [data-testid="stFileUploaderDropzone"] {
-        background: #1F2937;
-        border: 1px dashed #818CF8;
-        border-radius: 12px;
-    }
-
-    audio {
-        width: 100%;
-    }
-
-    [data-testid="stMetric"] {
-        background: #1F2937;
-        border: 1px solid rgba(167, 139, 250, 0.25);
-        border-radius: 15px;
-        padding: 15px;
-    }
-
-    [data-testid="stMetricLabel"] {
-        color: #C7D2FE;
-    }
-
-    [data-testid="stMetricValue"] {
-        color: #FFFFFF;
-    }
-
-    .stTextArea textarea,
-    .stTextInput input,
-    .stSelectbox div[data-baseweb="select"] {
-        background-color: #1F2937;
-        color: #FFFFFF;
-        border-radius: 10px;
-    }
-
-    [data-testid="stAlert"] {
-        border-radius: 12px;
-    }
-
-    .footer {
-        color: #9CA3AF;
-        text-align: center;
-        font-size: 13px;
-        padding-top: 30px;
-    }
     </style>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
+
 
 
 # ---------------- HERO ----------------
