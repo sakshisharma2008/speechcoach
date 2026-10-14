@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # ---------------- BACKEND CONFIG ----------------
-<<<<<<< HEAD
+
 BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
 
 
@@ -336,7 +336,7 @@ if result:
         ("duration", "Duration"),
     ]
 
-<<<<<<< HEAD
+
     metrics = [
         (label, result[key])
         for key, label in metric_fields
@@ -384,7 +384,7 @@ if result:
                 continue
 
             with st.container(border=True):
-<<<<<<< HEAD
+
                 st.markdown(f"**Sentence {i}**")
                 st.write(item.get("sentence", "Speech segment"))
 
@@ -421,7 +421,7 @@ if result:
 
                 available = [
                     (label, item[key])
-<<<<<<< HEAD
+
                     for key, label in metric_fields
 =======
                     for key, label in sentence_metrics
@@ -431,7 +431,7 @@ if result:
                 ]
 
                 if available:
-<<<<<<< HEAD
+
                     cols = st.columns(len(available))
                     for col, (label, value) in zip(cols, available):
                         col.metric(label, f"{value:.2f}")
@@ -451,7 +451,7 @@ if result:
                     tips = [tips]
 
                 if tips:
-<<<<<<< HEAD
+
                     st.markdown("**💡 Tips to improve**")
                     for tip in tips:
                         st.write(f"• {tip}")
@@ -518,8 +518,6 @@ if result:
                 graph_string = graph_string.split(",", 1)[1]
 
             graph_bytes = base64.b64decode(graph_string, validate=True)
-            st.image(graph_bytes, use_container_width=True)
-<<<<<<< HEAD
         except Exception:
             st.warning("Graph data was returned but could not be displayed.")
     else:
