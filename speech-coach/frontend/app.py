@@ -269,7 +269,7 @@ if st.button("✨ Analyze My Speech", use_container_width=True):
             st.error(f"Analysis failed: {exc}")
 
 
-=======
+
 
 
 # ---------------- DISPLAY RESULTS ----------------
@@ -277,7 +277,7 @@ result = st.session_state.get("speech_result")
 
 if result:
     st.markdown("---")
-<<<<<<< HEAD
+
     st.markdown("## 📊 Your Speech Analysis")
 
     transcript = result.get("transcript") or ""
@@ -306,7 +306,7 @@ if result:
 
     # Overview metrics
     metric_fields = [
-=======
+
     st.markdown(
         '<div class="section-title">📊 Your Speech Analysis</div>',
         unsafe_allow_html=True,
@@ -355,8 +355,7 @@ if result:
     st.markdown("### 🎯 Sentence-wise Analysis")
 
     if sentence_results:
-        for i, item in enumerate(sentence_results, start=1):
-=======
+
     available_metrics = [
         (label, result[key])
         for key, label in overall_metrics
@@ -396,7 +395,7 @@ if result:
                     st.caption(f"{start:.2f}s – {end:.2f}s")
 
                 metric_fields = [
-=======
+
                 st.markdown(f"**Sentence {index}**")
 
                 sentence = item.get(
@@ -423,7 +422,7 @@ if result:
                     (label, item[key])
 
                     for key, label in metric_fields
-=======
+
                     for key, label in sentence_metrics
 
                     if isinstance(item.get(key), (int, float))
@@ -475,7 +474,7 @@ if result:
     if graph:
         try:
             graph_string = str(graph)
-=======
+
                     st.markdown("**💡 Improvement Tips**")
 
                     for tip in tips:
@@ -524,7 +523,7 @@ if result:
         st.caption("The graph will appear when the backend generates it.")
 
    
-=======
+
 
         except Exception:
             st.warning(
