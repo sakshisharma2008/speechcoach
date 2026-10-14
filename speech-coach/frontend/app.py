@@ -412,8 +412,7 @@ if result:
                 ):
                     st.caption(f"Timestamp: {start:.2f}s – {end:.2f}s")
 
-                sentence_metrics = [
->>>>>>> 785a1b3 (Update speech coach and add dataset)
+
                     ("rate", "Speaking Rate"),
                     ("pitch", "Pitch"),
                     ("pitch_var", "Pitch Variation"),
