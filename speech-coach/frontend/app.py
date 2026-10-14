@@ -311,6 +311,7 @@ if result:
         '<div class="section-title">📊 Your Speech Analysis</div>',
         unsafe_allow_html=True,
     )
+    ]
 
     # Transcript
     transcript = result.get("transcript", "")
