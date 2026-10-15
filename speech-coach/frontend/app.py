@@ -132,16 +132,6 @@ st.markdown(
 )
 
 
-# ---------------- HEADER ----------------
-st.markdown("""
-<div class="hero">
-    <h1>🎤 Speech Coach AI</h1>
-    <p>
-        Improve your speaking skills with speech speed measurement,
-        sentence analysis and personalized feedback.
-    </p>
-</div>
-""", unsafe_allow_html=True)
 
 
 # ---------------- SIDEBAR ----------------
