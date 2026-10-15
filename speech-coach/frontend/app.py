@@ -134,14 +134,17 @@ st.markdown(
 
 
 
+
 # ---------------- SIDEBAR ----------------
 with st.sidebar:
     st.header("⚙️ Settings")
 
-    url = st.text_input(
-        "Backend URL",
-        placeholder="https://xxxx.trycloudflare.com"
-    )
+    # Read backend URL from Streamlit Secrets
+    try:
+        url = st.secrets["BACKEND_URL"].rstrip("/")
+    except (KeyError, FileNotFoundError):
+        st.error("⚠️ Backend URL not found in Streamlit Secrets.")
+        url = ""
 
     lang = st.selectbox(
         "Select Language",
@@ -152,8 +155,7 @@ with st.sidebar:
     st.divider()
 
     st.caption("🎙️ Record 3–4 complete sentences.")
-    st.caption("🔗 Start your Colab backend before analysis.")
-
+    st.caption("🔗 Ensure your Colab backend is running before analysis.")
 
 # ---------------- RECORDING SECTION ----------------
 st.markdown(
