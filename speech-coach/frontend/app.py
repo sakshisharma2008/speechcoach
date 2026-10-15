@@ -1,4 +1,3 @@
-```python
 import base64
 import pandas as pd
 import requests
@@ -463,4 +462,3 @@ if analyze:
             "Speech Coach AI · Practice regularly to improve clarity, "
             "pace and confidence."
         )
-```
