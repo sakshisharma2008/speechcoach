@@ -1,405 +1,466 @@
+```python
 import base64
-import html
-import os
-
+import pandas as pd
 import requests
 import streamlit as st
+import plotly.graph_objects as go
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="Speech Coach AI",
-    page_icon="🎙️",
-    layout="wide",
-    initial_sidebar_state="collapsed",
+    page_icon="🎤",
+    layout="wide"
 )
 
-# ---------------- BACKEND CONFIG ----------------
-BACKEND_URL = st.secrets.get("BACKEND_URL", "").rstrip("/")
+# ---------------- PROFESSIONAL CSS ----------------
+st.markdown("""
+<style>
+.stApp {
+    background: linear-gradient(135deg, #f5f7ff, #eef2ff);
+}
 
-# ---------------- PROFESSIONAL THEME ----------------
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: linear-gradient(
-            to bottom,
-            #111827 0%,
-            #1E1B4B 55%,
-            #272052 100%
-        );
-        color: #F9FAFB;
-    }
+.block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+    max-width: 1400px;
+}
 
-    [data-testid="stHeader"],
-    [data-testid="stAppViewContainer"] > .main {
-        background: transparent;
-    }
+.hero {
+    background: linear-gradient(120deg, #312e81, #6366f1, #8b5cf6);
+    padding: 30px;
+    border-radius: 22px;
+    color: white;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.20);
+}
 
-    .block-container {
-        max-width: 1200px;
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-    }
+.hero h1 {
+    color: white;
+    font-size: 36px;
+    margin-bottom: 8px;
+}
 
-    .hero {
-        background: linear-gradient(
-            120deg,
-            #3730A3 0%,
-            #6366F1 55%,
-            #8B5CF6 100%
-        );
-        padding: 32px 34px;
-        border-radius: 24px;
-        margin-bottom: 30px;
-        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
-    }
+.hero p {
+    color: #eef2ff;
+    font-size: 16px;
+    margin-bottom: 0;
+}
 
-    .hero h1 {
-        color: #FFFFFF;
-        font-size: clamp(30px, 4vw, 42px);
-        font-weight: 750;
-        margin: 0 0 12px 0;
-        letter-spacing: -1px;
-    }
+.section-title {
+    color: #312e81;
+    font-size: 23px;
+    font-weight: 700;
+    margin-top: 15px;
+    margin-bottom: 12px;
+}
 
-    .hero p {
-        color: #EEF2FF;
-        font-size: 16px;
-        line-height: 1.7;
-        margin: 0;
-    }
+div[data-testid="stMetric"] {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e0e7ff;
+    box-shadow: 0 4px 15px rgba(49, 46, 129, 0.06);
+}
 
-    h2, h3 {
-        color: #F9FAFB !important;
-    }
+div[data-testid="stMetricLabel"] {
+    color: #64748b;
+}
 
-    .section-title {
-        color: #E0E7FF;
-        font-size: 23px;
-        font-weight: 700;
-        margin: 24px 0 16px 0;
-    }
+div[data-testid="stMetricValue"] {
+    color: #312e81;
+}
 
-    .muted {
-        color: #C7D2FE;
-        font-size: 14px;
-    }
+.stButton > button {
+    background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-weight: 600;
+    width: 100%;
+}
 
-    .custom-card {
-        background: rgba(31, 41, 55, 0.88);
-        border: 1px solid rgba(167, 139, 250, 0.25);
-        border-radius: 18px;
-        padding: 20px;
-        margin-bottom: 16px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    }
+.stButton > button:hover {
+    color: white;
+    border: 1px solid #a5b4fc;
+}
 
-    .custom-card p {
-        color: #E5E7EB;
-        line-height: 1.7;
-        overflow-wrap: anywhere;
-    }
+div[data-testid="stExpander"] {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e0e7ff;
+}
 
-    label, .stMarkdown p {
-        color: #E5E7EB;
-    }
+div[data-testid="stAudioInput"] {
+    background: white;
+    padding: 16px;
+    border-radius: 14px;
+}
 
-    .footer {
-        color: #C7D2FE;
-        text-align: center;
-        padding: 24px 0 8px 0;
-        font-size: 14px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+</style>
+""", unsafe_allow_html=True)
 
-# ---------------- HERO ----------------
-st.markdown(
-    """
-    <div class="hero">
-        <h1>🎙️ Speech Coach AI</h1>
-        <p>
-            Improve your speaking skills with speech speed measurement,
-            sentence analysis and personalized feedback.
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
 
-# ---------- DATASET: IDEAL REFERENCE ----------
-st.markdown("---")
-st.header("📚 Dataset Reference Speech")
-
-ideal_audio_path = "dataset/audio/ideal/ideal_001.mp3"
-annotation_path = "dataset/annotations/ideal_001.txt"
-
-if os.path.exists(ideal_audio_path):
-    st.caption("Ideal reference recording")
-    st.audio(ideal_audio_path, format="audio/mp3")
-else:
-    st.warning(
-        "Ideal reference audio not found. "
-        "Check the dataset path in your repository."
-    )
-
-if os.path.exists(annotation_path):
-    with open(annotation_path, "r", encoding="utf-8") as annotation_file:
-        ideal_annotation = annotation_file.read()
-
-    with st.expander("View ideal reference transcript"):
-        st.text(ideal_annotation)
-else:
-    st.caption("Reference annotation file was not found.")
-
-# ---------------- RECORD OR UPLOAD SPEECH ----------------
-st.markdown(
-    '<div class="section-title">🎤 Record Your Speech</div>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    """
-    <p class="muted">
-        Record your speech or upload an audio file to receive personalized feedback.
+# ---------------- HEADER ----------------
+st.markdown("""
+<div class="hero">
+    <h1>🎤 Speech Coach AI</h1>
+    <p>
+        Improve your speaking skills with speech speed measurement,
+        sentence analysis and personalized feedback.
     </p>
-    """,
-    unsafe_allow_html=True,
-)
+</div>
+""", unsafe_allow_html=True)
 
-audio_file = st.audio_input("Record your voice")
 
-st.markdown(
-    '<div class="muted">Or upload a recording</div>',
-    unsafe_allow_html=True,
-)
-uploaded_file = st.file_uploader(
-    "Choose an audio file",
-    type=["wav", "mp3", "m4a", "ogg", "webm"],
-    label_visibility="collapsed",
-)
+# ---------------- SIDEBAR ----------------
+with st.sidebar:
+    st.header("⚙️ Settings")
 
-selected_audio = audio_file if audio_file is not None else uploaded_file
-
-# ---------------- ANALYZE SPEECH ----------------
-if st.button("✨ Analyze My Speech", use_container_width=True):
-    if selected_audio is None:
-        st.warning("Please record your speech or upload an audio file first.")
-    elif not BACKEND_URL:
-        st.error(
-            "Backend URL is not configured. Add BACKEND_URL "
-            "to your Streamlit Community Cloud Secrets."
-        )
-    else:
-        try:
-            with st.spinner("Analyzing your speech... Please wait."):
-                audio_bytes = selected_audio.getvalue()
-                filename = getattr(selected_audio, "name", None) or "recording.wav"
-                mime_type = (
-                    getattr(selected_audio, "type", None)
-                    or "application/octet-stream"
-                )
-
-                response = requests.post(
-                    f"{BACKEND_URL}/analyze",
-                    files={"file": (filename, audio_bytes, mime_type)},
-                    timeout=180,
-                )
-                response.raise_for_status()
-                result = response.json()
-
-                if not isinstance(result, dict):
-                    raise ValueError("The backend did not return a JSON object.")
-
-                st.session_state["speech_result"] = result
-
-        except requests.exceptions.Timeout:
-            st.session_state.pop("speech_result", None)
-            st.error(
-                "Analysis timed out. Check that your backend is running "
-                "and try again."
-            )
-        except requests.exceptions.ConnectionError:
-            st.session_state.pop("speech_result", None)
-            st.error(
-                "Could not connect to the backend. Check BACKEND_URL "
-                "and make sure your backend or Cloudflare tunnel is active."
-            )
-        except requests.exceptions.HTTPError as exc:
-            st.session_state.pop("speech_result", None)
-            st.error(f"Backend returned an HTTP error: {exc}")
-            if "response" in locals():
-                with st.expander("View error details"):
-                    st.code(response.text[:5000])
-        except (ValueError, requests.exceptions.JSONDecodeError) as exc:
-            st.session_state.pop("speech_result", None)
-            st.error(f"Could not read the backend response: {exc}")
-        except Exception as exc:
-            st.session_state.pop("speech_result", None)
-            st.error(f"Analysis failed: {exc}")
-
-# ---------------- DISPLAY RESULTS ----------------
-result = st.session_state.get("speech_result")
-
-if result:
-    st.markdown("---")
-    st.markdown(
-        '<div class="section-title">📊 Your Speech Analysis</div>',
-        unsafe_allow_html=True,
+    url = st.text_input(
+        "Backend URL",
+        placeholder="https://xxxx.trycloudflare.com"
     )
 
-    transcript = result.get("transcript") or ""
-    sentence_results = result.get("results") or []
-    regions = result.get("regions") or []
-    graph = result.get("graph")
+    lang = st.selectbox(
+        "Select Language",
+        ["en", "hi"],
+        format_func=lambda x: "English" if x == "en" else "Hindi"
+    )
 
-    if not transcript and not sentence_results:
-        st.error(
-            "⚠️ The backend received a request but returned no speech "
-            "analysis. Please check the backend logs."
-        )
-        st.info(
-            "Your dashboard is working. The transcription or audio "
-            "processing step needs debugging."
-        )
+    st.divider()
 
-    # Transcript
-    st.markdown("### 📝 Transcript")
-    if transcript:
-        st.markdown(
-            '<div class="custom-card"><p>'
-            + html.escape(str(transcript))
-            + "</p></div>",
-            unsafe_allow_html=True,
-        )
+    st.caption("🎙️ Record 3–4 complete sentences.")
+    st.caption("🔗 Start your Colab backend before analysis.")
+
+
+# ---------------- RECORDING SECTION ----------------
+st.markdown(
+    '<div class="section-title">🎙️ Record Your Speech</div>',
+    unsafe_allow_html=True
+)
+
+recording = st.audio_input("Record your voice")
+
+analyze = st.button("✨ Analyze My Speech", use_container_width=True)
+
+
+# ---------------- ANALYSIS ----------------
+if analyze:
+
+    if recording is None:
+        st.warning("Please record your speech first.")
+
+    elif not url.strip():
+        st.error("Please enter your Colab backend URL in the sidebar.")
+
     else:
-        st.info("No transcript was returned by the backend.")
+        with st.spinner("Analyzing your speech... Please wait."):
 
-    # Overall metrics
-    overall_metrics = [
-        ("score", "Speech Score"),
-        ("speech_rate", "Speech Rate"),
-        ("duration", "Duration"),
-    ]
-    available_metrics = [
-        (label, result[key])
-        for key, label in overall_metrics
-        if key in result
-        and result[key] is not None
-        and not isinstance(result[key], (dict, list, bool))
-    ]
+            try:
+                response = requests.post(
+                    url.rstrip("/") + "/analyze",
+                    files={
+                        "file": (
+                            "recording.wav",
+                            recording.getvalue(),
+                            "audio/wav"
+                        )
+                    },
+                    data={"lang": lang},
+                    timeout=300
+                )
 
-    if available_metrics:
-        st.markdown("### 📌 Overview")
-        metric_columns = st.columns(len(available_metrics))
-        for column, (label, value) in zip(metric_columns, available_metrics):
-            column.metric(label, value)
+                response.raise_for_status()
+                data = response.json()
 
-    # Sentence-by-sentence analysis
-    st.markdown("### 🎯 Sentence-wise Analysis")
-    if sentence_results:
-        sentence_metrics = [
-            ("rate", "Speaking Rate"),
-            ("pitch", "Pitch"),
-            ("pitch_var", "Pitch Variation"),
-            ("energy", "Energy"),
+            except requests.exceptions.Timeout:
+                st.error("Analysis timed out. Please try again.")
+
+                st.stop()
+
+            except requests.exceptions.RequestException as e:
+                st.error(f"Could not connect to the backend: {e}")
+                st.stop()
+
+            except ValueError:
+                st.error("The backend did not return valid JSON.")
+                st.stop()
+
+        results = data.get("results", [])
+
+        if not results:
+            st.warning(
+                "No sentences detected. Please record a longer, clearer speech."
+            )
+            st.stop()
+
+        # ---------------- CALCULATE METRICS ----------------
+        problem_count = sum(
+            1 for item in results if item.get("tips")
+        )
+
+        # Assumes each sentence's rate is measured in words per second.
+        rates = [
+            float(item.get("rate") or 0)
+            for item in results
         ]
 
-        for index, item in enumerate(sentence_results, start=1):
-            if not isinstance(item, dict):
-                continue
+        avg_wpm = sum(rates) / len(rates) * 60
 
-            with st.container(border=True):
-                st.markdown(f"**Sentence {index}**")
-                sentence = item.get("sentence", "Sentence unavailable")
-                st.write(sentence)
+        total_sentences = len(results)
+        issue_percentage = (problem_count / total_sentences) * 100
 
-                start = item.get("start")
-                end = item.get("end")
-                if isinstance(start, (int, float)) and isinstance(end, (int, float)):
-                    st.caption(f"Timestamp: {start:.2f}s – {end:.2f}s")
+        # ---------------- PERFORMANCE OVERVIEW ----------------
+        st.markdown(
+            '<div class="section-title">📊 Performance Overview</div>',
+            unsafe_allow_html=True
+        )
 
-                available = [
-                    (label, item[key])
-                    for key, label in sentence_metrics
-                    if isinstance(item.get(key), (int, float))
-                    and not isinstance(item.get(key), bool)
-                ]
-                if available:
-                    metric_columns = st.columns(len(available))
-                    for column, (label, value) in zip(metric_columns, available):
-                        column.metric(label, f"{value:.2f}")
+        c1, c2, c3 = st.columns(3)
 
-                tips = item.get("tips", [])
-                if isinstance(tips, str):
-                    tips = [tips]
+        c1.metric(
+            "📝 Total Sentences",
+            total_sentences
+        )
+
+        c2.metric(
+            "⚡ Speaking Speed",
+            f"{avg_wpm:.0f} WPM"
+        )
+
+        c3.metric(
+            "⚠️ Sentences With Issues",
+            f"{problem_count}/{total_sentences}"
+        )
+
+        # ---------------- SPEEDOMETER ----------------
+        st.markdown(
+            '<div class="section-title">🎯 Speaking Speed Meter</div>',
+            unsafe_allow_html=True
+        )
+
+        gauge_value = max(0, min(avg_wpm, 240))
+
+        fig = go.Figure(
+            go.Indicator(
+                mode="gauge+number",
+                value=gauge_value,
+                number={
+                    "suffix": " WPM",
+                    "font": {"size": 34, "color": "#312e81"}
+                },
+                title={
+                    "text": "Your Average Speaking Speed",
+                    "font": {"size": 19, "color": "#334155"}
+                },
+                gauge={
+                    "axis": {
+                        "range": [0, 240],
+                        "tickwidth": 1,
+                        "tickcolor": "#64748b",
+                        "dtick": 30
+                    },
+                    "bar": {
+                        "color": "#4f46e5",
+                        "thickness": 0.25
+                    },
+                    "bgcolor": "white",
+                    "borderwidth": 0,
+                    "steps": [
+                        {
+                            "range": [0, 100],
+                            "color": "#fee2e2"
+                        },
+                        {
+                            "range": [100, 120],
+                            "color": "#fef3c7"
+                        },
+                        {
+                            "range": [120, 150],
+                            "color": "#dcfce7"
+                        },
+                        {
+                            "range": [150, 180],
+                            "color": "#fef3c7"
+                        },
+                        {
+                            "range": [180, 240],
+                            "color": "#fee2e2"
+                        }
+                    ],
+                    "threshold": {
+                        "line": {
+                            "color": "#16a34a",
+                            "width": 4
+                        },
+                        "thickness": 0.8,
+                        "value": 135
+                    }
+                }
+            )
+        )
+
+        fig.update_layout(
+            height=320,
+            margin=dict(l=25, r=25, t=70, b=20),
+            paper_bgcolor="rgba(0,0,0,0)",
+            font={"family": "Arial"}
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            config={"displayModeBar": False}
+        )
+
+        st.caption(
+            "Illustrative guide: this meter highlights 120–150 WPM "
+            "as a target range. The best pace depends on the speaker, "
+            "language and speaking situation."
+        )
+
+        if avg_wpm < 120:
+            st.info(
+                "💡 Your pace is below the highlighted target range. "
+                "Try speaking a little faster while staying clear."
+            )
+        elif avg_wpm <= 150:
+            st.success(
+                "🎉 Your speaking speed is within the highlighted target range!"
+            )
+        else:
+            st.info(
+                "💡 Your pace is above the highlighted target range. "
+                "Try slowing down slightly and pausing between ideas."
+            )
+
+        # ---------------- TRANSCRIPT ----------------
+        st.markdown(
+            '<div class="section-title">📄 Speech Transcript</div>',
+            unsafe_allow_html=True
+        )
+
+        with st.expander("View your complete transcript", expanded=True):
+            st.write(data.get("transcript", "Transcript not available."))
+
+        # ---------------- GRAPH ----------------
+        if data.get("graph"):
+            st.markdown(
+                '<div class="section-title">📈 Speech Analysis Graph</div>',
+                unsafe_allow_html=True
+            )
+
+            try:
+                graph_bytes = base64.b64decode(data["graph"])
+                st.image(
+                    graph_bytes,
+                    caption=(
+                        "Green = ideal range | Red = problem areas | "
+                        "S1, S2... = sentences"
+                    ),
+                    use_container_width=True
+                )
+            except Exception:
+                st.warning("The analysis graph could not be displayed.")
+
+        # ---------------- DETECTED ISSUES ----------------
+        st.markdown(
+            '<div class="section-title">🔍 Detected Issues</div>',
+            unsafe_allow_html=True
+        )
+
+        regions = data.get("regions", [])
+
+        if regions:
+            region_df = pd.DataFrame(regions).rename(
+                columns={
+                    "from": "Start (seconds)",
+                    "to": "End (seconds)",
+                    "issue": "Detected Issue"
+                }
+            )
+
+            st.dataframe(
+                region_df,
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.success("🎉 No long-duration issues were detected.")
+
+        # ---------------- SENTENCE-WISE FEEDBACK ----------------
+        st.markdown(
+            '<div class="section-title">💬 Sentence-wise Feedback</div>',
+            unsafe_allow_html=True
+        )
+
+        for i, item in enumerate(results, start=1):
+
+            sentence = item.get("sentence", "")
+            tips = item.get("tips") or []
+
+            with st.expander(f"Sentence {i}", expanded=bool(tips)):
+
+                st.write(f"**What you said:** {sentence}")
+
                 if tips:
-                    st.markdown("**💡 Improvement Tips**")
+                    st.warning("Suggestions for improvement")
+
                     for tip in tips:
                         st.write(f"• {tip}")
-    else:
-        st.caption("Sentence-level metrics will appear when returned by the backend.")
+                else:
+                    st.success("No issues flagged for this sentence.")
 
-    # Detected issues and timestamps
-    st.markdown("### ⚠️ Areas to Improve")
-    if regions:
-        for region in regions:
-            if not isinstance(region, dict):
-                continue
-            start = region.get("from", region.get("start", 0))
-            end = region.get("to", region.get("end", 0))
-            issue = region.get("issue", "Review this section")
-            st.markdown(
-                f"""
-                <div class="custom-card">
-                    <p><strong>⏱️ {html.escape(str(start))}s – {html.escape(str(end))}s</strong></p>
-                    <p>{html.escape(str(issue))}</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-    else:
-        st.caption("No issue regions were returned by the backend.")
+        # ---------------- DETAILED TABLE ----------------
+        st.markdown(
+            '<div class="section-title">📋 Detailed Measurements</div>',
+            unsafe_allow_html=True
+        )
 
-    # Graph returned by the backend
-    st.markdown("### 📈 Speech Analysis Graph")
-    if graph:
-        try:
-            graph_string = str(graph)
-            if graph_string.startswith("data:image"):
-                graph_string = graph_string.split(",", 1)[1]
-            graph_bytes = base64.b64decode(graph_string, validate=True)
-            st.image(graph_bytes, use_container_width=True)
-        except Exception:
-            st.warning("The backend returned graph data, but it could not be displayed as an image.")
-    else:
-        st.caption("The graph will appear when the backend generates it.")
+        table = pd.DataFrame(results).drop(
+            columns=["tips"],
+            errors="ignore"
+        )
 
-    # Other feedback fields, if provided
-    for key, title in [
-        ("feedback", "💡 Additional Feedback"),
-        ("analysis", "🔍 Additional Analysis"),
-    ]:
-        value = result.get(key)
-        if value:
-            st.markdown(f"### {title}")
-            if isinstance(value, str):
-                st.write(value)
-            elif isinstance(value, list):
-                for entry in value:
-                    st.write(f"• {entry}")
-            elif isinstance(value, dict):
-                for label, detail in value.items():
-                    st.markdown(f"**{str(label).replace('_', ' ').title()}**")
-                    st.write(detail)
+        table.index = [
+            f"Sentence {i}"
+            for i in range(1, len(table) + 1)
+        ]
 
-# ---------------- FOOTER ----------------
-st.markdown(
-    """
-    <div class="footer">
-        Speech Coach AI · Practice with purpose. Speak with confidence.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+        st.dataframe(
+            table,
+            use_container_width=True
+        )
+
+        # ---------------- AUDIO COMPARISON ----------------
+        st.markdown(
+            '<div class="section-title">🎧 Listen and Compare</div>',
+            unsafe_allow_html=True
+        )
+
+        original_col, ideal_col = st.columns(2)
+
+        with original_col:
+            st.markdown("**Your Original Recording**")
+            st.audio(recording)
+
+        with ideal_col:
+            st.markdown("**Improved / Ideal Recording**")
+
+            if data.get("ideal_audio"):
+                try:
+                    ideal_bytes = base64.b64decode(data["ideal_audio"])
+                    st.audio(ideal_bytes, format="audio/mp3")
+                except Exception:
+                    st.warning("The ideal audio could not be played.")
+            else:
+                st.info("Ideal audio is not available from the backend.")
+
+        # ---------------- FOOTER ----------------
+        st.divider()
+        st.caption(
+            "Speech Coach AI · Practice regularly to improve clarity, "
+            "pace and confidence."
+        )
+```
